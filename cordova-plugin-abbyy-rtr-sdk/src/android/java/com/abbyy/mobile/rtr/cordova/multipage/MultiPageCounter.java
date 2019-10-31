@@ -9,7 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.abbyy.mobile.rtr.cordova.utils.ImageUtils;
-import com.abbyy.rtrcordovasample.R;
+import de.fanomena.hileadzz.cordovaapp.R;
 
 /**
  * Auxiliary class for the view that displays the current session's page count

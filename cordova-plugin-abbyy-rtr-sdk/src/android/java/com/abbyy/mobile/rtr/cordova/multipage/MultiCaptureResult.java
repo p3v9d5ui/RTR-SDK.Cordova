@@ -6,7 +6,7 @@ import android.util.SparseArray;
 
 import com.abbyy.mobile.rtr.cordova.ImageCaptureSettings;
 import com.abbyy.mobile.rtr.cordova.utils.ImageUtils;
-import com.abbyy.rtrcordovasample.R;
+import de.fanomena.hileadzz.cordovaapp.R;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -33,7 +33,7 @@ import com.abbyy.mobile.rtr.cordova.utils.ImageUtils;
 import com.abbyy.mobile.rtr.cordova.utils.MultiPagesProcessor;
 import com.abbyy.mobile.uicomponents.CaptureView;
 import com.abbyy.mobile.uicomponents.scenario.ImageCaptureScenario;
-import com.abbyy.rtrcordovasample.R;
+import de.fanomena.hileadzz.cordovaapp.R;
 
 import java.io.File;
 import java.util.HashMap;

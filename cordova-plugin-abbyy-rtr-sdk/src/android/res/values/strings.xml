@@ -12,7 +12,6 @@
     <string name="start_text">Start</string>
     <string name="captured_pages_delete_warning">You will lose captured pages</string>
     <string name="discard_pages">Discard pages</string>
-    <string name="cancel">Cancel</string>
     <string name="discard">Discard</string>
     <string name="add_page">Add New Page</string>
     <string name="unknown_error">Something has gone wrong</string>
