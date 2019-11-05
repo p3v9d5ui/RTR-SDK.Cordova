@@ -46,6 +46,7 @@ public class RtrPlugin extends CordovaPlugin {
 	private static final int REQUEST_CODE_PERMISSIONS_TEXT_CAPTURE = 401;
 	private static final int REQUEST_CODE_PERMISSIONS_DATA_CAPTURE = 402;
 	private static final int REQUEST_CODE_PERMISSIONS_IMAGE_CAPTURE = 403;
+	private static final int REQUEST_CODE_PERMISSIONS_IMAGE_DATA_CAPTURE = 404;
 
 	private static final String REQUIRED_PERMISSION = Manifest.permission.CAMERA;
 
@@ -154,6 +155,26 @@ public class RtrPlugin extends CordovaPlugin {
 				return true;
 			}
 		}
+
+		if( "startDataImageCapture".equals( action ) ) {
+			if( init( callbackContext, args ) ) {
+				if( customDataCaptureSettings.has( RTR_CUSTOM_DATA_CAPTURE_FIELDS_KEY ) ) {
+					JSONArray fields = customDataCaptureSettings.getJSONArray(RTR_CUSTOM_DATA_CAPTURE_FIELDS_KEY);
+					RtrManager.setSelectedLanguages( parseSelectedLanguage( customDataCaptureSettings ) );
+				}
+				try {
+					parseScenario( inputParameters );
+				} catch( IllegalArgumentException e ) {
+					onError( e.getMessage() );
+					return false;
+				} catch( JSONException e ) {
+					onError( e.getMessage() );
+					return false;
+				}
+				checkPermissionAndStartImageDataCapture();
+				return true;
+			}
+		}
 		return false;
 	}
 
@@ -218,6 +239,15 @@ public class RtrPlugin extends CordovaPlugin {
 		startDataCapture();
 	}
 
+	private void checkPermissionAndStartImageDataCapture()
+	{
+		if( !this.cordova.hasPermission( Manifest.permission.READ_EXTERNAL_STORAGE ) ) {
+			this.cordova.requestPermission( this, REQUEST_CODE_PERMISSIONS_DATA_CAPTURE, Manifest.permission.READ_EXTERNAL_STORAGE );
+			return;
+		}
+		captureDataFromImage();
+	}
+
 	private void startImageCapture()
 	{
 		Intent intent = ImageCaptureActivity.newImageCaptureIntent( cordova.getActivity() );
@@ -239,15 +269,15 @@ public class RtrPlugin extends CordovaPlugin {
 		this.cordova.startActivityForResult( this, intent, REQUEST_CODE_DATA_CAPTURE );
 	}
 
-	private HashMap<String, Object> captureDataFromImage(String pathImage, Language ... languages)
+	private void captureDataFromImage(String pathImage)
 	{
 	// If no permission to read file, first ask for it
-	if( this.cordova.checkSelfPermission( context, Manifest.permission.READ_EXTERNAL_STORAGE )
-			!= PackageManager.PERMISSION_GRANTED ) {
-		this.cordova.requestPermissions( context,  new String[] { Manifest.permission.READ_EXTERNAL_STORAGE },
-				READ_EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE );
-		return;
-	}
+//	if( this.cordova.checkSelfPermission( context, Manifest.permission.READ_EXTERNAL_STORAGE )
+//			!= PackageManager.PERMISSION_GRANTED ) {
+//		this.cordova.requestPermissions( context,  new String[] { Manifest.permission.READ_EXTERNAL_STORAGE },
+//				READ_EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE );
+//		return;
+//	}
 
 		// Load file
 		String[] filePathColumn = { MediaStore.Images.Media.DATA };
@@ -258,10 +288,47 @@ public class RtrPlugin extends CordovaPlugin {
 			image = BitmapFactory.decodeFile( picturePath );
 		}
 
-//		Executor executor = Executors.newSingleThreadExecutor();
-//		executor.execute(new CaptureImageDataCallable(this, image, recognitionLanguage));
+		Executor executor = Executors.newSingleThreadExecutor();
+//		recognizedData = new CaptureImageDataCallable(this.cordova, image, languages);
+		Future<HashMap<String, Object>> recognizedData = executor.submit(new Callable<HashMap<String, Object>>() {
+			// Callback for handling data extraction-time events (same as in recognition task)
+			public IDataCaptureCoreAPI.Callback callback = new IDataCaptureCoreAPI.Callback() {
 
-		recognizedData = new CaptureImageDataCallable(this.cordova, image, languages);
+				@Override
+				public boolean onProgress( int recognitionPercent, IDataCaptureCoreAPI.Warning warning )
+				{
+					String progress = String.format( "Recognition progress %d%%.", recognitionPercent );
+					Log.e( TAG+" Core API\\n(RTR SDK)", "Progress: " + progress );
+					// Return true for interrupting recognition, false otherwise
+					return false;
+				}
+
+				@Override
+				public void onTextOrientationDetected( int orientation )
+				{
+					// Here you can handle information about the text orientation
+					// E.g. you can rotate image in UI
+				}
+
+				@Override
+				public void onError( Exception e )
+				{
+					// Recognition process errors handling
+					Log.e( TAG+" Core API\\n(RTR SDK)", "Recognition error: " + e.getMessage(), e );
+                    callback.error( new JSONObject( " Core API\\n(RTR SDK)" + "Recognition error: " + e.getMessage() + e.toString() ) );
+				}
+			};
+
+			@Override
+			public HashMap<String, Object> call() throws Exception {
+				// Do it!
+				IDataCaptureCoreAPI.DataField[] dataFields = dataCaptureCoreAPI.extractDataFromImage(image, callback);
+
+				// return
+				callback.success(new JSONObject( packJson(dataFields)) );
+				return packJson(dataFields);	// change to runnable
+			}
+		});
 	}
 
 	@Override
@@ -271,7 +338,7 @@ public class RtrPlugin extends CordovaPlugin {
 		for( int result : grantResults ) {
 			if( result == PackageManager.PERMISSION_DENIED ) {
 				Toast.makeText( cordova.getActivity(), ResourcesUtils.getResId( "string", "runtime_permissions_txt", cordova.getActivity() ), Toast.LENGTH_SHORT ).show();
-				onError( "Camera access denied" );
+				onError( "Required access denied" );
 				return;
 			}
 		}
@@ -285,6 +352,9 @@ public class RtrPlugin extends CordovaPlugin {
 				break;
 			case REQUEST_CODE_PERMISSIONS_DATA_CAPTURE:
 				startDataCapture();
+				break;
+			case REQUEST_CODE_PERMISSIONS_IMAGE_DATA_CAPTURE:
+				captureDataFromImage();
 				break;
 		}
 	}
