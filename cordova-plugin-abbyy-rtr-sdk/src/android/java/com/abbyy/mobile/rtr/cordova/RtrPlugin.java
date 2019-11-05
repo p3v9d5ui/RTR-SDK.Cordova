@@ -239,6 +239,31 @@ public class RtrPlugin extends CordovaPlugin {
 		this.cordova.startActivityForResult( this, intent, REQUEST_CODE_DATA_CAPTURE );
 	}
 
+	private HashMap<String, Object> captureDataFromImage(String pathImage, Language ... languages)
+	{
+	// If no permission to read file, first ask for it
+	if( this.cordova.checkSelfPermission( context, Manifest.permission.READ_EXTERNAL_STORAGE )
+			!= PackageManager.PERMISSION_GRANTED ) {
+		this.cordova.requestPermissions( context,  new String[] { Manifest.permission.READ_EXTERNAL_STORAGE },
+				READ_EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE );
+		return;
+	}
+
+		// Load file
+		String[] filePathColumn = { MediaStore.Images.Media.DATA };
+		Bitmap image;
+		try( Cursor cursor = this.cordova.getContentResolver().query( pathImage, filePathColumn, null, null, null ) ) {
+			cursor.moveToFirst();
+			String picturePath = cursor.getString( cursor.getColumnIndex( filePathColumn[0] ) );
+			image = BitmapFactory.decodeFile( picturePath );
+		}
+
+//		Executor executor = Executors.newSingleThreadExecutor();
+//		executor.execute(new CaptureImageDataCallable(this, image, recognitionLanguage));
+
+		recognizedData = new CaptureImageDataCallable(this.cordova, image, languages);
+	}
+
 	@Override
 	public void onRequestPermissionResult( int requestCode, String[] permissions,
 		int[] grantResults ) throws JSONException
