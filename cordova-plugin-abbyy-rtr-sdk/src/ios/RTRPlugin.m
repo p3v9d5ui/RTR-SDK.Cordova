@@ -8,11 +8,13 @@
 #import "RTRDataCaptureScenario.h"
 #import "NSDictionary+RTRSettings.h"
 
-#import <AbbyyRtrSDK/AbbyyRtrSDK.h>
+
 #import <AbbyyUI/AbbyyUI.h>
 
 #import "RTRImageCaptureViewController.h"
 #import "RTRPluginConstants.h"
+
+#import "CapturingDataImageService.h"
 
 @interface RTRImageCaptureOptions : NSObject
 
@@ -144,6 +146,17 @@
 
 		[self presentCaptureViewController:rtrViewController command:command];
 	}];
+}
+
+-(void) captureDataFromImagePath: (NSString*) imagePath
+                       languages: (NSSet<RTRLanguageName>*)languages
+                     licensePath: (NSString*) licensePath
+                 resultCallback: (RTRDataFromImageResult) onFinishedCallback {
+       CapturingDataImageService* service = [[CapturingDataImageService alloc] initWithImagePath: imagePath
+                                                                                      languages: languages
+                                                                                    licensePath: licensePath];
+    
+    [service captureDataOnFinished: onFinishedCallback];
 }
 
 - (void)startImageCapture:(CDVInvokedUrlCommand*)command

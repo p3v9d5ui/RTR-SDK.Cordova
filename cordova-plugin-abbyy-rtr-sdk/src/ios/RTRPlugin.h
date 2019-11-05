@@ -3,6 +3,7 @@
 
 #import <Foundation/Foundation.h>
 #import <Cordova/CDVPlugin.h>
+#import <AbbyyRtrSDK/AbbyyRtrSDK.h>
 
 typedef NS_ENUM(NSUInteger, RTRImageCaptureDestintationType) {
 	RTRImageCaptureDestintationDataUrl,
@@ -22,5 +23,12 @@ typedef NS_ENUM(NSUInteger, RTRImageCaptureEncodingType) {
 - (void)startTextCapture:(CDVInvokedUrlCommand*)command;
 - (void)startDataCapture:(CDVInvokedUrlCommand*)command;
 - (void)startImageCapture:(CDVInvokedUrlCommand*)command;
+
+-(void) captureDataFromImagePath: (NSString*) imagePath
+                       languages: (NSSet<RTRLanguageName>*)languages
+                     licenseName: (NSString*) licenseName
+                 resultCallback: (RTRDataFromImageResult) onFinishedCallback {
+    
+}
 
 @end
