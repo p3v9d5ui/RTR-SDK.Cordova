@@ -38,41 +38,32 @@
 // MARK: - Appearance
 
 -(void) captureDataOnSuccess: (nullable RTRDataFromImageSuccessResult) onSuccessCallback onError: (nullable RTRDataFromImageErrorResult) onErrorCallback {
-    if (self.coreAPI == nil) {
-        // lisense should be wrong
-        NSDictionary *userInfo = @{
-            NSLocalizedDescriptionKey: NSLocalizedString(@"Wrong Lisense", nil),
-            NSLocalizedFailureReasonErrorKey: NSLocalizedString(@"Wrong Lisense", nil),
-            NSLocalizedRecoverySuggestionErrorKey: NSLocalizedString(@"Please check you license file or license file path?", nil)
-        };
-        
-        NSError* error = [[NSError alloc] initWithDomain: NSCocoaErrorDomain code: -103 userInfo:userInfo];
-        onErrorCallback(error);
-        return;
-    }
-    
-    typeof(^{}) actionBlock = nil;
-    
-    actionBlock = ^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSError* error;
-            NSArray<RTRDataField*>* result = [self.coreAPI
-                                              extractDataFromImage: self.image
-                                              onProgress:^BOOL(NSInteger percentage, RTRCallbackWarningCode warningCode) {
-                return YES;
-            } onTextOrientationDetected: nil error: &error];
-            
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if(result == nil) {
-                    onErrorCallback(error);
-                } else {
-                    onSuccessCallback([[RTRDataFieldConvertor new] convertToDictionary:result]);
-                }
-            });
-        });
+  if (self.coreAPI == nil) {
+    // lisense should be wrong
+    NSDictionary *userInfo = @{
+      NSLocalizedDescriptionKey: NSLocalizedString(@"Wrong Lisense", nil),
+      NSLocalizedFailureReasonErrorKey: NSLocalizedString(@"Wrong Lisense", nil),
+      NSLocalizedRecoverySuggestionErrorKey: NSLocalizedString(@"Please check you license file or license file path?", nil)
     };
-    
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), actionBlock);
+    NSError* error = [[NSError alloc] initWithDomain: NSCocoaErrorDomain code: -103 userInfo:userInfo];
+    onErrorCallback(error);
+    return;
+  }
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    NSError* error;
+    NSArray<RTRDataField*>* result = [self.coreAPI
+                     extractDataFromImage: self.image
+                     onProgress:^BOOL(NSInteger percentage, RTRCallbackWarningCode warningCode) {
+      return YES;
+    } onTextOrientationDetected: nil error: &error];
+    dispatch_async(dispatch_get_main_queue(), ^{
+      if(result == nil) {
+        onErrorCallback(error);
+      } else {
+        onSuccessCallback([[RTRDataFieldConvertor new] convertToDictionary:result]);
+      }
+    });
+  });
 }
 
 // MARK: - Private

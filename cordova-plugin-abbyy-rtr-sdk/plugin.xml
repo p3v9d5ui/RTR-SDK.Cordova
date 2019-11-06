@@ -156,6 +156,12 @@ To get started:
 			</feature>
 		</config-file>
 
+    <header-file src="src/ios/Data Capute Service/CapturingDataImageService.h" />
+		<source-file src="src/ios/Data Capute Service/CapturingDataImageService.m" />
+
+		<header-file src="src/ios/Data Capute Service/RTRDataFieldConvertor.h" />
+		<source-file src="src/ios/Data Capute Service/RTRDataFieldConvertor.m" />
+
 		<header-file src="src/ios/RTRPlugin.h" />
 		<source-file src="src/ios/RTRPlugin.m" />
 

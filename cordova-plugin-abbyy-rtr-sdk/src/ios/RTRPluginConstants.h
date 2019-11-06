@@ -10,6 +10,7 @@ NS_ASSUME_NONNULL_BEGIN
 extern NSString* const RTRCordovaPluginErrorDomain;
 extern NSString* const RTRRecognitionLanguagesKey;
 extern NSString* const RTRSelectableRecognitionLanguagesKey;
+extern NSString* const RTRICDataCaptureImagePathKey;
 extern NSString* const RTRLicenseFileNameKey;
 extern NSString* const RTRStopWhenStableKey;
 extern NSString* const RTRIsStopButtonVisibleKey;

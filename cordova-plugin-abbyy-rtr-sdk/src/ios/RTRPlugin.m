@@ -167,7 +167,7 @@
                                                                                   licenseName: licenseFileName];
 
     
-    __weak typeof(self) weakSelf = self;
+    __weak RTRPlugin* weakSelf = self;
 
 	// callbacks are on main queue. capture data on background
     [service captureDataOnSuccess:^(NSDictionary * _Nullable dictionary) {
