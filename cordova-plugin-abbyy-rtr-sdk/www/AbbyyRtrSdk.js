@@ -18,4 +18,8 @@ module.exports = {
 	startImageCapture: function (callback, options) {
 		exec(callback, callback, "AbbyyRtrSdk", "startImageCapture", [options]);
 	},
+
+	startCaptureDataFromImage: function (callback, options) {
+		exec(callback, callback, "AbbyyRtrSdk", "startCaptureDataFromImage", [options]);
+	},
 }

@@ -149,22 +149,34 @@
 }
 
 - (void)startCaptureDataFromImage:(CDVInvokedUrlCommand*)command {
-	[self.commandDelegate runInBackground:^{
-		
-		NSDictionary* params = command.arguments.firstObject;
 
-		NSString* imagePath = params[RTRICDataCaptureImagePathKey];
-		NSString* licenseFileName = params[RTRLicenseFileNameKey];
-		NSArray<NSString*>* languages = params[RTRRecognitionLanguagesKey];
+	// we do not need perform on background itselft because CapturingDataImageService does it
+	
+	NSDictionary* params = command.arguments.firstObject;
 
-		
-	 /*   CapturingDataImageService* service = [[CapturingDataImageService alloc] initWithImagePath: imagePath
-                                                                                      languages: languages
-                                                                                    licensePath: licensePath];
+	// here could be an
+	NSString* imagePath = params[RTRICDataCaptureImagePathKey];
+	NSString* licenseFileName = params[RTRLicenseFileNameKey];
+	NSArray<NSString*>* languages = params[RTRRecognitionLanguagesKey];
+
+	// to see if we got everything right. if there is data
+	NSLog(@"Image Path = %@, licenseFileName = %@, languages = %@", imagePath, licenseFileName, languages);
+	
+	CapturingDataImageService* service = [[CapturingDataImageService alloc] initWithImagePath: imagePath
+                                                                                    languages: languages
+                                                                                  licenseName: licenseFileName];
+
     
-    [service captureDataOnFinished: onFinishedCallback]; 
-	*/
-	}];
+    __weak typeof(self) weakSelf = self;
+
+	// callbacks are on main queue. capture data on background
+    [service captureDataOnSuccess:^(NSDictionary * _Nullable dictionary) {
+		CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:dictionary];
+		[weakSelf.commandDelegate sendPluginResult: pluginResult callbackId:command.callbackId];
+    } onError:^(NSError * _Nullable error) {
+		CDVPluginResult* result = [CDVPluginResult rtrResultWithError:error];
+		[self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }];
 }
 
 - (void)startImageCapture:(CDVInvokedUrlCommand*)command

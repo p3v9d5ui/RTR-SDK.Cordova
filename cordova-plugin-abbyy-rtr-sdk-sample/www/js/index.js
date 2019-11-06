@@ -198,6 +198,14 @@ function dataCapture() {
 	});
 }
 
+function caputeDataFromImage() {
+	AbbyyRtrSdk.startCaptureDataFromImage(abbyyRtrSdkPluginCallback, {
+		licenseFileName : "AbbyyRtrSdk.license",
+		imagePath: "some image Path",
+		recognitionLanguages: ["English"]
+	});
+}
+
 var startCaptureButton = new Button('startCaptureButton', function() {
 	if(imageCaptureTab.checked) {
 		imageCapture();
