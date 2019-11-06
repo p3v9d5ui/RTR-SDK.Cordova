@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RTRDataFieldConvertor : NSObject
 
--(NSData*) convertToJSOnObject: (NSArray<RTRDataField*>*)dataFields;
+-(NSDictionary*) convertToDictionary: (NSArray<RTRDataField*>*)dataFields;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -16,24 +16,16 @@
 
 // MARK: - Appearance
 
--(NSData*) convertToJSOnObject: (NSArray<RTRDataField*>*)dataFields {
+-(NSDictionary*) convertToDictionary: (NSArray<RTRDataField*>*)dataFields {
     NSDictionary* finalDictionary = @{
         @"dataFields" : [self convertDataFieldToArrayMap: dataFields],
         @"dataScheme": @{ @"id": @"BusinessCards", @"name": @"Business Cards" }
     };
     
-    return [self serializaToJSONObject: finalDictionary];
+    return finalDictionary;
 }
 
 // MARK: - Private
-
--(NSData*) serializaToJSONObject: (id)obj {
-    NSError *error;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject: obj
-                                                       options: NSJSONWritingPrettyPrinted
-                                                         error: &error];
-    return jsonData;
-}
 
 -(NSArray*) convertDataFieldToArrayMap: (NSArray<RTRDataField*>*)dataFields {
     NSMutableArray<NSDictionary*>* array = [NSMutableArray new];
@@ -61,7 +53,6 @@
 -(NSMutableDictionary*) rtrDataFieldObject: (RTRDataField*) field {
     NSMutableDictionary* dictionary = [NSMutableDictionary new];
     
-    // there is a problem with mutable dictionary if string is empty  
     if (field.name.length != 0)
     [dictionary setObject: field.name forKey: @"name"];
     

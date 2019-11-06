@@ -12,12 +12,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void (^RTRDataFromImageResult) (NSData* _Nullable jsonData, NSError* _Nullable error);
+typedef void (^RTRDataFromImageSuccessResult) (NSDictionary* _Nullable dictionary);
+typedef void (^RTRDataFromImageErrorResult) (NSError* _Nullable error);
 
 @interface CapturingDataImageService : NSObject
 
--(instancetype) initWithImagePath: (NSString*) imagePath languages: (NSSet<RTRLanguageName>*)languages licensePath: (NSString*) licencePath;
--(void) captureDataOnFinished: (RTRDataFromImageResult) onResult;
+-(instancetype) initWithImagePath: (NSString*) imagePath languages: (NSArray<NSString*>*)languages licenseName: (NSString*) licenseName;
+-(void) captureDataOnSuccess: (nullable RTRDataFromImageSuccessResult) onSuccessCallback onError: (nullable RTRDataFromImageErrorResult) onErrorCallback;
 
 @end
 

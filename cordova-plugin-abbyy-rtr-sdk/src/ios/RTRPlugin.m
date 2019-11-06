@@ -148,15 +148,23 @@
 	}];
 }
 
--(void) captureDataFromImagePath: (NSString*) imagePath
-                       languages: (NSSet<RTRLanguageName>*)languages
-                     licensePath: (NSString*) licensePath
-                 resultCallback: (RTRDataFromImageResult) onFinishedCallback {
-       CapturingDataImageService* service = [[CapturingDataImageService alloc] initWithImagePath: imagePath
+- (void)startCaptureDataFromImage:(CDVInvokedUrlCommand*)command {
+	[self.commandDelegate runInBackground:^{
+		
+		NSDictionary* params = command.arguments.firstObject;
+
+		NSString* imagePath = params[RTRICDataCaptureImagePathKey];
+		NSString* licenseFileName = params[RTRLicenseFileNameKey];
+		NSArray<NSString*>* languages = params[RTRRecognitionLanguagesKey];
+
+		
+	 /*   CapturingDataImageService* service = [[CapturingDataImageService alloc] initWithImagePath: imagePath
                                                                                       languages: languages
                                                                                     licensePath: licensePath];
     
-    [service captureDataOnFinished: onFinishedCallback];
+    [service captureDataOnFinished: onFinishedCallback]; 
+	*/
+	}];
 }
 
 - (void)startImageCapture:(CDVInvokedUrlCommand*)command

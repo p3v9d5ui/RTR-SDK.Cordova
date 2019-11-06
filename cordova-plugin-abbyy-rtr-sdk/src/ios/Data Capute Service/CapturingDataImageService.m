@@ -19,16 +19,17 @@
 
 // MARK: - Initialization
 
--(instancetype) initWithImagePath: (NSString*) imagePath languages: (NSSet<RTRLanguageName>*)languages licensePath: (NSString*) licensePath {
+-(instancetype) initWithImagePath: (NSString*) imagePath languages: (NSArray<NSString*>*)languages licenseName: (NSString*) licenseName {
     self = [super init];
     
     if (self) {
-        RTREngine* engine = [self createEngineUsingLicensePath: licensePath];
+        RTREngine* engine = [self createEngineUsingLicenseName: licenseName];
         self.coreAPI = [engine createCoreAPI];
         self.image = [UIImage imageWithData: [NSData dataWithContentsOfFile: imagePath]];
         
+        NSSet* set = [NSSet setWithArray: languages];
         // set languages
-        [[self.coreAPI.dataCaptureSettings configureDataCaptureProfile] setRecognitionLanguages:languages];
+        [[self.coreAPI.dataCaptureSettings configureDataCaptureProfile] setRecognitionLanguages: set];
     }
     
     return self;
@@ -36,7 +37,7 @@
 
 // MARK: - Appearance
 
--(void) captureDataOnFinished: (RTRDataFromImageResult) onResult; {
+-(void) captureDataOnSuccess: (nullable RTRDataFromImageSuccessResult) onSuccessCallback onError: (nullable RTRDataFromImageErrorResult) onErrorCallback {
     if (self.coreAPI == nil) {
         // lisense should be wrong
         return;
@@ -55,9 +56,9 @@
             
             dispatch_async(dispatch_get_main_queue(), ^{
                 if(result == nil) {
-                    onResult(nil, error);
+                    onErrorCallback(error);
                 } else {
-                    onResult([[RTRDataFieldConvertor new] convertToJSOnObject:result], nil);
+                    onSuccessCallback([[RTRDataFieldConvertor new] convertToDictionary:result]);
                 }
             });
         });
@@ -68,7 +69,8 @@
 
 // MARK: - Private
 
--(RTREngine*) createEngineUsingLicensePath: (NSString*) licensePath {
+-(RTREngine*) createEngineUsingLicenseName: (NSString*) licenseName {
+    NSString* licensePath = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:licenseName];
     return [RTREngine sharedEngineWithLicenseData: [NSData dataWithContentsOfFile:licensePath]];
 }
 

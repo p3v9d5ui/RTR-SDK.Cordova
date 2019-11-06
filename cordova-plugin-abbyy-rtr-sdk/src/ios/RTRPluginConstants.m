@@ -39,3 +39,6 @@ NSString* const RTRICDefaultImageSettingsKey = @"defaultImageSettings";
 NSString* const RTRICDocumentSizeKey = @"documentSize";
 NSString* const RTRICCropEnabledKey = @"cropEnabled";
 NSString* const RTRICMinimumDocumentToViewRatioKey = @"minimumDocumentToViewRatio";
+
+NSString* const RTRICDataCaptureImagePathKey = @"imagePath";
+
