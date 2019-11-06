@@ -5,7 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Toast;
@@ -32,6 +37,10 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import com.abbyy.mobile.rtr.IDataCaptureCoreAPI;
 
 public class RtrPlugin extends CordovaPlugin {
 
@@ -164,8 +173,8 @@ public class RtrPlugin extends CordovaPlugin {
 					parseImagePath(inputParameters);
 				}
 				if (init(callbackContext, args)) {
-					if (customDataCaptureSettings.has(RTR_RECOGNITION_LANGUAGES_KEY)) {
-						RtrManager.setSelectedLanguages(parseSelectedLanguage(customDataCaptureSettings));
+					if (inputParameters.has(RTR_RECOGNITION_LANGUAGES_KEY)) {
+						RtrManager.setSelectedLanguages(parseSelectedLanguage(inputParameters));
 					}
 				}
 				RtrManager.setDataCaptureProfile("BusinessCards");
@@ -179,7 +188,7 @@ public class RtrPlugin extends CordovaPlugin {
 			checkPermissionAndStartImageDataCapture();
 			return true;
 			}
-		}
+
 		return false;
 	}
 
@@ -279,14 +288,15 @@ public class RtrPlugin extends CordovaPlugin {
 		// Load file
 		String[] filePathColumn = { MediaStore.Images.Media.DATA };
 		Bitmap image;
-		try( Cursor cursor = this.cordova.getContentResolver().query( imagePath, filePathColumn, null, null, null ) ) {
+		try( Cursor cursor = cordova.getActivity().getApplicationContext().getContentResolver().query( Uri.parse(imagePath), filePathColumn, null, null, null ) ) {
 			cursor.moveToFirst();
 			String picturePath = cursor.getString( cursor.getColumnIndex( filePathColumn[0] ) );
 			image = BitmapFactory.decodeFile( picturePath );
 		}
+		final Bitmap finalImage = image;
 
 		Executor executor = Executors.newSingleThreadExecutor();
-		executor.execute(new Runnable< HashMap<String, Object> >() {
+		executor.execute(new Runnable() {
 			// Callback for handling data extraction-time events (same as in recognition task)
 			public IDataCaptureCoreAPI.Callback apiCallback = new IDataCaptureCoreAPI.Callback() {
 
@@ -294,7 +304,7 @@ public class RtrPlugin extends CordovaPlugin {
 				public boolean onProgress( int recognitionPercent, IDataCaptureCoreAPI.Warning warning )
 				{
 					String progress = String.format( "Recognition progress %d%%.", recognitionPercent );
-					Log.e( TAG+" Core API\\n(RTR SDK)", "Progress: " + progress );
+					Log.e( " Core API\\n(RTR SDK)", "Progress: " + progress );
 					// Return true for interrupting recognition, false otherwise
 					return false;
 				}
@@ -310,15 +320,15 @@ public class RtrPlugin extends CordovaPlugin {
 				public void onError( Exception e )
 				{
 					// Recognition process errors handling
-					Log.e( TAG+" Core API\\n(RTR SDK)", "Recognition error: " + e.getMessage(), e );
-                    callback.error( new JSONObject( " Core API\\n(RTR SDK)" + "Recognition error: " + e.getMessage() + e.toString() ) );
+					Log.e( " Core API\\n(RTR SDK)", "Recognition error: " + e.getMessage(), e );
+                    callback.error( e.getMessage());
 				}
 			};
 
 			@Override
-			public HashMap<String, Object> call() throws Exception {
+			public void run() {
 				// Do it!
-				IDataCaptureCoreAPI.DataField[] dataFields = dataCaptureCoreAPI.extractDataFromImage(image, apiCallback);
+				IDataCaptureCoreAPI.DataField[] dataFields = RtrManager.getDataCaptureCoreAPI().extractDataFromImage(finalImage, apiCallback);
 
 				// return data
 				callback.success(new JSONObject( packJson(dataFields)) );
@@ -793,7 +803,7 @@ public class RtrPlugin extends CordovaPlugin {
 		RtrManager.setDataCaptureProfile( profile );
 	}
 
-	private String packJson (IDataCaptureCoreAPI.DataField[] fields) {
+	private HashMap<String, Object> packJson (IDataCaptureCoreAPI.DataField[] fields) {
 
 		HashMap<String, String> resultInfo = new HashMap<>();
 

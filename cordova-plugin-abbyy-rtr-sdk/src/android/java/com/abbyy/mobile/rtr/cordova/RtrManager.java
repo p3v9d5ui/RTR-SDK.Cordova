@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.util.SparseArray;
 
 import com.abbyy.mobile.rtr.Engine;
+import com.abbyy.mobile.rtr.IDataCaptureCoreAPI;
 import com.abbyy.mobile.rtr.IDataCaptureService;
 import com.abbyy.mobile.rtr.IImagingCoreAPI;
 import com.abbyy.mobile.rtr.ITextCaptureService;
@@ -37,6 +38,10 @@ public class RtrManager {
 	private static int orientation;
 
 	private static SparseArray<PageHolder> imageCaptureResult;
+
+	public static IDataCaptureCoreAPI getDataCaptureCoreAPI() {
+		return engine.createDataCaptureCoreAPI();
+	}
 
 	public static void initWithLicense( Context context ) throws IOException, Engine.LicenseException
 	{
