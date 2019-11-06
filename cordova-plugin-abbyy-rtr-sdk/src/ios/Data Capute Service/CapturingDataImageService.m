@@ -40,6 +40,14 @@
 -(void) captureDataOnSuccess: (nullable RTRDataFromImageSuccessResult) onSuccessCallback onError: (nullable RTRDataFromImageErrorResult) onErrorCallback {
     if (self.coreAPI == nil) {
         // lisense should be wrong
+        NSDictionary *userInfo = @{
+            NSLocalizedDescriptionKey: NSLocalizedString(@"Wrong Lisense", nil),
+            NSLocalizedFailureReasonErrorKey: NSLocalizedString(@"Wrong Lisense", nil),
+            NSLocalizedRecoverySuggestionErrorKey: NSLocalizedString(@"Please check you license file or license file path?", nil)
+        };
+        
+        NSError* error = [[NSError alloc] initWithDomain: NSCocoaErrorDomain code: -103 userInfo:userInfo];
+        onErrorCallback(error);
         return;
     }
     
