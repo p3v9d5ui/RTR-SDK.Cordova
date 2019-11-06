@@ -56,6 +56,7 @@ public class RtrPlugin extends CordovaPlugin {
 	private static final String RTR_SELECTABLE_RECOGNITION_LANGUAGES_KEY = "selectableRecognitionLanguages";
 
 	private static final String RTR_LICENSE_FILE_NAME_KEY = "licenseFileName";
+	private static final String RTR_IMAGE_FILE_PATH = "imagePath";
 
 	private static final String RTR_CAMERA_RESOLUTION_KEY = "cameraResolution";
 	private static final String RTR_IS_SHOW_PREVIEW_KEY = "showPreview";
@@ -91,6 +92,7 @@ public class RtrPlugin extends CordovaPlugin {
 
 	private CallbackContext callback = null;
 	private JSONObject inputParameters;
+	private String imagePath;
 
 	@Override
 	public boolean execute( String action, JSONArray args, final CallbackContext callbackContext ) throws JSONException
@@ -156,23 +158,26 @@ public class RtrPlugin extends CordovaPlugin {
 			}
 		}
 
-		if( "startDataImageCapture".equals( action ) ) {
-			if( init( callbackContext, args ) ) {
-				if( customDataCaptureSettings.has( RTR_CUSTOM_DATA_CAPTURE_FIELDS_KEY ) ) {
-					JSONArray fields = customDataCaptureSettings.getJSONArray(RTR_CUSTOM_DATA_CAPTURE_FIELDS_KEY);
-					RtrManager.setSelectedLanguages( parseSelectedLanguage( customDataCaptureSettings ) );
+		if( "startCaptureDataFromImage".equals( action ) ) {
+			try {
+				if (inputParameters.has(RTR_IMAGE_FILE_PATH)) {
+					parseImagePath(inputParameters);
 				}
-				try {
-					parseScenario( inputParameters );
-				} catch( IllegalArgumentException e ) {
+				if (init(callbackContext, args)) {
+					if (customDataCaptureSettings.has(RTR_RECOGNITION_LANGUAGES_KEY)) {
+						RtrManager.setSelectedLanguages(parseSelectedLanguage(customDataCaptureSettings));
+					}
+				}
+				RtrManager.setDataCaptureProfile("BusinessCards");
+			} catch( IllegalArgumentException e ) {
 					onError( e.getMessage() );
 					return false;
-				} catch( JSONException e ) {
-					onError( e.getMessage() );
-					return false;
-				}
-				checkPermissionAndStartImageDataCapture();
-				return true;
+			} catch( JSONException e ) {
+				onError( e.getMessage() );
+				return false;
+			}
+			checkPermissionAndStartImageDataCapture();
+			return true;
 			}
 		}
 		return false;
@@ -242,7 +247,7 @@ public class RtrPlugin extends CordovaPlugin {
 	private void checkPermissionAndStartImageDataCapture()
 	{
 		if( !this.cordova.hasPermission( Manifest.permission.READ_EXTERNAL_STORAGE ) ) {
-			this.cordova.requestPermission( this, REQUEST_CODE_PERMISSIONS_DATA_CAPTURE, Manifest.permission.READ_EXTERNAL_STORAGE );
+			this.cordova.requestPermission( this, REQUEST_CODE_PERMISSIONS_IMAGE_DATA_CAPTURE, Manifest.permission.READ_EXTERNAL_STORAGE );
 			return;
 		}
 		captureDataFromImage();
@@ -269,30 +274,21 @@ public class RtrPlugin extends CordovaPlugin {
 		this.cordova.startActivityForResult( this, intent, REQUEST_CODE_DATA_CAPTURE );
 	}
 
-	private void captureDataFromImage(String pathImage)
+	private void captureDataFromImage()
 	{
-	// If no permission to read file, first ask for it
-//	if( this.cordova.checkSelfPermission( context, Manifest.permission.READ_EXTERNAL_STORAGE )
-//			!= PackageManager.PERMISSION_GRANTED ) {
-//		this.cordova.requestPermissions( context,  new String[] { Manifest.permission.READ_EXTERNAL_STORAGE },
-//				READ_EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE );
-//		return;
-//	}
-
 		// Load file
 		String[] filePathColumn = { MediaStore.Images.Media.DATA };
 		Bitmap image;
-		try( Cursor cursor = this.cordova.getContentResolver().query( pathImage, filePathColumn, null, null, null ) ) {
+		try( Cursor cursor = this.cordova.getContentResolver().query( imagePath, filePathColumn, null, null, null ) ) {
 			cursor.moveToFirst();
 			String picturePath = cursor.getString( cursor.getColumnIndex( filePathColumn[0] ) );
 			image = BitmapFactory.decodeFile( picturePath );
 		}
 
 		Executor executor = Executors.newSingleThreadExecutor();
-//		recognizedData = new CaptureImageDataCallable(this.cordova, image, languages);
-		Future<HashMap<String, Object>> recognizedData = executor.submit(new Callable<HashMap<String, Object>>() {
+		executor.execute(new Runnable< HashMap<String, Object> >() {
 			// Callback for handling data extraction-time events (same as in recognition task)
-			public IDataCaptureCoreAPI.Callback callback = new IDataCaptureCoreAPI.Callback() {
+			public IDataCaptureCoreAPI.Callback apiCallback = new IDataCaptureCoreAPI.Callback() {
 
 				@Override
 				public boolean onProgress( int recognitionPercent, IDataCaptureCoreAPI.Warning warning )
@@ -322,11 +318,10 @@ public class RtrPlugin extends CordovaPlugin {
 			@Override
 			public HashMap<String, Object> call() throws Exception {
 				// Do it!
-				IDataCaptureCoreAPI.DataField[] dataFields = dataCaptureCoreAPI.extractDataFromImage(image, callback);
+				IDataCaptureCoreAPI.DataField[] dataFields = dataCaptureCoreAPI.extractDataFromImage(image, apiCallback);
 
-				// return
+				// return data
 				callback.success(new JSONObject( packJson(dataFields)) );
-				return packJson(dataFields);	// change to runnable
 			}
 		});
 	}
@@ -401,6 +396,13 @@ public class RtrPlugin extends CordovaPlugin {
 			licenseFileName = arg.getString( RTR_LICENSE_FILE_NAME_KEY );
 		}
 		RtrManager.setLicenseFileName( licenseFileName );
+	}
+
+	private void parseImagePath( JSONObject arg ) throws JSONException
+	{
+		if( arg.has( RTR_IMAGE_FILE_PATH ) ) {
+			imagePath = arg.getString( RTR_IMAGE_FILE_PATH );
+		}
 	}
 
 	private void parseCameraResolution( JSONObject arg ) throws JSONException
@@ -791,4 +793,77 @@ public class RtrPlugin extends CordovaPlugin {
 		RtrManager.setDataCaptureProfile( profile );
 	}
 
+	private String packJson (IDataCaptureCoreAPI.DataField[] fields) {
+
+		HashMap<String, String> resultInfo = new HashMap<>();
+
+		ArrayList<HashMap<String, Object>> fieldList = new ArrayList<>();
+		if( fields != null ) {
+			for( IDataCaptureCoreAPI.DataField field : fields ) {
+				HashMap<String, Object> fieldInfo = new HashMap<>();
+				fieldInfo.put( "id", field.Id != null ? field.Id : "" );
+				fieldInfo.put( "name", field.Name != null ? field.Name : "" );
+
+				fieldInfo.put( "text", field.Text );
+				if( field.Quadrangle != null ) {
+					StringBuilder builder = new StringBuilder();
+					for( int i = 0; i < field.Quadrangle.length; i++ ) {
+						builder.append( field.Quadrangle[i].x );
+						builder.append( ' ' );
+						builder.append( field.Quadrangle[i].y );
+						if( i != field.Quadrangle.length - 1 ) {
+							builder.append( ' ' );
+						}
+					}
+					fieldInfo.put( "quadrangle", builder.toString() );
+				}
+
+				ArrayList<HashMap<String, String>> lineList = new ArrayList<>();
+				IDataCaptureCoreAPI.DataField[] components = field.Components;
+				if( components != null ) {
+					for( IDataCaptureCoreAPI.DataField line : field.Components ) {
+						HashMap<String, String> lineInfo = new HashMap<>();
+						lineInfo.put( "text", line.Text );
+						if( line.Quadrangle != null ) {
+							StringBuilder lineBuilder = new StringBuilder();
+							for( int i = 0; i < line.Quadrangle.length; i++ ) {
+								lineBuilder.append( line.Quadrangle[i].x );
+								lineBuilder.append( ' ' );
+								lineBuilder.append( line.Quadrangle[i].y );
+								if( i != line.Quadrangle.length - 1 ) {
+									lineBuilder.append( ' ' );
+								}
+							}
+							lineInfo.put( "quadrangle", lineBuilder.toString() );
+						}
+						lineList.add( lineInfo );
+					}
+				} else {
+					HashMap<String, String> lineInfo = new HashMap<>();
+					lineInfo.put( "text", field.Text );
+					if( field.Quadrangle != null ) {
+						StringBuilder lineBuilder = new StringBuilder();
+						for( int i = 0; i < field.Quadrangle.length; i++ ) {
+							lineBuilder.append( field.Quadrangle[i].x );
+							lineBuilder.append( ' ' );
+							lineBuilder.append( field.Quadrangle[i].y );
+							if( i != field.Quadrangle.length - 1 ) {
+								lineBuilder.append( ' ' );
+							}
+						}
+						lineInfo.put( "quadrangle", lineBuilder.toString() );
+					}
+					lineList.add( lineInfo );
+				}
+				fieldInfo.put( "components", lineList );
+
+				fieldList.add( fieldInfo );
+			}
+		}
+
+		HashMap<String, Object> json = new HashMap<>();
+		json.put( "resultInfo", resultInfo );
+		json.put( "dataFields", fieldList );
+		return json;
+	}
 }

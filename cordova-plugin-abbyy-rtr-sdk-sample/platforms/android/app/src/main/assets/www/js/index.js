@@ -206,8 +206,6 @@ function caputeDataFromImage() {
 	});
 }
 
-
-
 var startCaptureButton = new Button('startCaptureButton', function() {
 	if(imageCaptureTab.checked) {
 		imageCapture();
