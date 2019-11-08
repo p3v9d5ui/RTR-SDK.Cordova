@@ -168,11 +168,12 @@ public class RtrPlugin extends CordovaPlugin {
 		if ("startCaptureDataFromImage".equals(action)) {
 			try {
 				Log.d("RtrPlugin", "inputParameters" + inputParameters.toString());
-				if (inputParameters.has(RTR_IMAGE_FILE_PATH)) {
-					imagePath = inputParameters.getString(RTR_IMAGE_FILE_PATH);
-					Log.d("RtrPlugin", "imagePath " + imagePath);
-				}
+
 				if (init(callbackContext, args)) {
+					if (inputParameters.has(RTR_IMAGE_FILE_PATH)) {
+						imagePath = inputParameters.getString(RTR_IMAGE_FILE_PATH);
+						Log.d("RtrPlugin", "imagePath " + imagePath);
+					}
 					if (inputParameters.has(RTR_RECOGNITION_LANGUAGES_KEY)) {
 						RtrManager.setSelectedLanguages(parseSelectedLanguage(inputParameters));
 					}
@@ -195,6 +196,7 @@ public class RtrPlugin extends CordovaPlugin {
 	}
 
 	private boolean init(final CallbackContext callbackContext, JSONArray args) {
+		Log.d("RtrPlugins", "init args " + args.toString());
 		callback = callbackContext;
 
 		if (args.length() <= 0) {
@@ -204,6 +206,7 @@ public class RtrPlugin extends CordovaPlugin {
 
 		try {
 			inputParameters = args.getJSONObject(0);
+			Log.d("RtrPlugins", "init inputParameters " + inputParameters.toString());
 			parseLicenseName(inputParameters);
 			Context applicationContext = this.cordova.getActivity().getApplicationContext();
 			RtrManager.initWithLicense(applicationContext);
