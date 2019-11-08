@@ -312,8 +312,8 @@ public class RtrPlugin extends CordovaPlugin {
 			@Override
 			public void run() {
 				// Do it!
-				IDataCaptureCoreAPI datacaptureCoreAPI = RtrManager.getDatacaptureCoreAPI();
-				IDataCaptureCoreAPI.DataField[] dataFields = datacaptureCoreAPI.extractDataFromImage(image, apiCallback);
+				IDataCaptureCoreAPI dataCaptureCoreAPI = RtrManager.getDataCaptureCoreAPI();
+				IDataCaptureCoreAPI.DataField[] dataFields = dataCaptureCoreAPI.extractDataFromImage(image, apiCallback);
 
 				// return data
 				callback.success(new JSONObject(packJson(dataFields)));
