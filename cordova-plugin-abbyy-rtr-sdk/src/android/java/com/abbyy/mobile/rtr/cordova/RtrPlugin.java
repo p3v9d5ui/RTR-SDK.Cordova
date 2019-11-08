@@ -5,12 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.preference.PreferenceManager;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Toast;
@@ -170,8 +167,10 @@ public class RtrPlugin extends CordovaPlugin {
 
 		if ("startCaptureDataFromImage".equals(action)) {
 			try {
+				Log.d("RtrPlugin", "inputParameters" + inputParameters.toString());
 				if (inputParameters.has(RTR_IMAGE_FILE_PATH)) {
-					parseImagePath(inputParameters);
+					imagePath = inputParameters.getString(RTR_IMAGE_FILE_PATH);
+					Log.d("RtrPlugin", "imagePath " + imagePath);
 				}
 				if (init(callbackContext, args)) {
 					if (inputParameters.has(RTR_RECOGNITION_LANGUAGES_KEY)) {
@@ -180,9 +179,11 @@ public class RtrPlugin extends CordovaPlugin {
 				}
 				RtrManager.setDataCaptureProfile("BusinessCards");
 			} catch (IllegalArgumentException e) {
+				Log.e("RtrPlugin", "IllegalArgumentException " + e);
 				onError(e.getMessage());
 				return false;
 			} catch (JSONException e) {
+				Log.e("RtrPlugin", "JSONException " + e);
 				onError(e.getMessage());
 				return false;
 			}
@@ -278,6 +279,7 @@ public class RtrPlugin extends CordovaPlugin {
 
 	private void captureDataFromImage() {
 		// Load file
+		Log.d("RtrPlugin", "captureDataFromImage " + imagePath);
 		File file = new File(imagePath);
 		Log.d("RtrPlugin", "file exists " + file.exists());
 		final Bitmap image = BitmapFactory.decodeFile(imagePath);
@@ -388,12 +390,6 @@ public class RtrPlugin extends CordovaPlugin {
 			licenseFileName = arg.getString(RTR_LICENSE_FILE_NAME_KEY);
 		}
 		RtrManager.setLicenseFileName(licenseFileName);
-	}
-
-	private void parseImagePath(JSONObject arg) throws JSONException {
-		if (arg.has(RTR_IMAGE_FILE_PATH)) {
-			imagePath = arg.getString(RTR_IMAGE_FILE_PATH);
-		}
 	}
 
 	private void parseCameraResolution(JSONObject arg) throws JSONException {
@@ -633,7 +629,7 @@ public class RtrPlugin extends CordovaPlugin {
 		if (languages.size() == 0) {
 			languages.add(Language.English);
 		}
-
+		Log.d("RtrPlugin", "languages " + languages.toString());
 		return languages;
 	}
 
