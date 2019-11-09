@@ -19,7 +19,8 @@ module.exports = {
 		exec(callback, callback, "AbbyyRtrSdk", "startImageCapture", [options]);
 	},
 
+	/// Extract text data from BusinessCardImage by its path
 	startCaptureDataFromImage: function (callback, options) {
 		exec(callback, callback, "AbbyyRtrSdk", "startCaptureDataFromImage", [options]);
-	},
+	}
 }
