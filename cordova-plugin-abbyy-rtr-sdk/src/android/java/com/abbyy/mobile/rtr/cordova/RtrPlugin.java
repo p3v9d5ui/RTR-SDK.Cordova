@@ -321,7 +321,7 @@ public class RtrPlugin extends CordovaPlugin {
 				IDataCaptureCoreAPI.DataField[] dataFields = dataCaptureCoreAPI.extractDataFromImage(image, apiCallback);
 
 				// return data
-				callback.success(new JSONObject(packJson(dataFields)));
+				callback.success(convertToJsonObject(dataFields));
 			}
 		});
 	}
@@ -756,77 +756,45 @@ public class RtrPlugin extends CordovaPlugin {
 		RtrManager.setDataCaptureProfile(profile);
 	}
 
-	private HashMap<String, Object> packJson(IDataCaptureCoreAPI.DataField[] fields) {
-
-		HashMap<String, String> resultInfo = new HashMap<>();
-
-		ArrayList<HashMap<String, Object>> fieldList = new ArrayList<>();
-		if (fields != null) {
-			for (IDataCaptureCoreAPI.DataField field : fields) {
-				HashMap<String, Object> fieldInfo = new HashMap<>();
-				fieldInfo.put("id", field.Id != null ? field.Id : "");
-				fieldInfo.put("name", field.Name != null ? field.Name : "");
-
-				fieldInfo.put("text", field.Text);
-				if (field.Quadrangle != null) {
-					StringBuilder builder = new StringBuilder();
-					for (int i = 0; i < field.Quadrangle.length; i++) {
-						builder.append(field.Quadrangle[i].x);
-						builder.append(' ');
-						builder.append(field.Quadrangle[i].y);
-						if (i != field.Quadrangle.length - 1) {
-							builder.append(' ');
-						}
-					}
-					fieldInfo.put("quadrangle", builder.toString());
-				}
-
-				ArrayList<HashMap<String, String>> lineList = new ArrayList<>();
-				IDataCaptureCoreAPI.DataField[] components = field.Components;
-				if (components != null) {
-					for (IDataCaptureCoreAPI.DataField line : field.Components) {
-						HashMap<String, String> lineInfo = new HashMap<>();
-						lineInfo.put("text", line.Text);
-						if (line.Quadrangle != null) {
-							StringBuilder lineBuilder = new StringBuilder();
-							for (int i = 0; i < line.Quadrangle.length; i++) {
-								lineBuilder.append(line.Quadrangle[i].x);
-								lineBuilder.append(' ');
-								lineBuilder.append(line.Quadrangle[i].y);
-								if (i != line.Quadrangle.length - 1) {
-									lineBuilder.append(' ');
-								}
-							}
-							lineInfo.put("quadrangle", lineBuilder.toString());
-						}
-						lineList.add(lineInfo);
-					}
-				} else {
-					HashMap<String, String> lineInfo = new HashMap<>();
-					lineInfo.put("text", field.Text);
-					if (field.Quadrangle != null) {
-						StringBuilder lineBuilder = new StringBuilder();
-						for (int i = 0; i < field.Quadrangle.length; i++) {
-							lineBuilder.append(field.Quadrangle[i].x);
-							lineBuilder.append(' ');
-							lineBuilder.append(field.Quadrangle[i].y);
-							if (i != field.Quadrangle.length - 1) {
-								lineBuilder.append(' ');
-							}
-						}
-						lineInfo.put("quadrangle", lineBuilder.toString());
-					}
-					lineList.add(lineInfo);
-				}
-				fieldInfo.put("components", lineList);
-
-				fieldList.add(fieldInfo);
-			}
+	private JSONObject convertToJsonObject(IDataCaptureCoreAPI.DataField[] dataFields) {
+		ArrayList<HashMap<String, Object>> lineList = new ArrayList<>();
+		for (IDataCaptureCoreAPI.DataField dataField : dataFields) {
+			lineList.add(packJson(dataField));
 		}
 
 		HashMap<String, Object> json = new HashMap<>();
-		json.put("resultInfo", resultInfo);
-		json.put("dataFields", fieldList);
-		return json;
+		json.put("dataFields", lineList);
+		JSONObject jsonObject = new JSONObject(json);
+		Log.d("RtrPlugin", "jsonObject " + jsonObject);
+		return jsonObject;
+	}
+
+	private HashMap<String, Object> packJson(IDataCaptureCoreAPI.DataField component) {
+		HashMap<String, Object> componentInfo = new HashMap<>();
+
+		componentInfo.put("id", component.Id != null ? component.Id : "");
+		componentInfo.put("name", component.Name != null ? component.Name : "");
+		componentInfo.put("text", component.Text);
+		if (component.Quadrangle != null) {
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < component.Quadrangle.length; i++) {
+				builder.append(component.Quadrangle[i].x);
+				builder.append(' ');
+				builder.append(component.Quadrangle[i].y);
+				if (i != component.Quadrangle.length - 1) {
+					builder.append(' ');
+				}
+			}
+			componentInfo.put("quadrangle", builder.toString());
+		}
+
+		List<Object> componentList = new ArrayList<>();
+		if (component.Components != null) {
+			for (IDataCaptureCoreAPI.DataField dataField : component.Components) {
+				componentList.add(packJson(dataField));
+			}
+		}
+		componentInfo.put("components", componentList);
+		return componentInfo;
 	}
 }
